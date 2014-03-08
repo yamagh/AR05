@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">AR05</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="run_camera">カメラを起動</string>
+    <string name="action_run_camera">onClickCameraButton</string>
+    <string name="button_camera_back">戻る</string>
+    <string name="action_back_main">onClickCameraBackButton</string>
+    <string name="get_image">画像を取得(RPC)</string>
+    <string name="action_get_image">onClickGetImage</string>
+
+</resources>
