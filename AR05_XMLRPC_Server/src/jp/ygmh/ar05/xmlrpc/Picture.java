@@ -11,40 +11,36 @@ import org.apache.ws.commons.util.Base64;
 
 public class Picture {
 
-//	public static void main(String[] args){
-//		Picture p = new Picture();
-//		p.getPictureByte();
-//	}
-
-	public String[] filepath = {
+	// 画像格納先パス
+	// Todo: 画像をDBから取り出すようにする
+	public static String[] filepath = {
 			 "WebContent/WEB-INF/res/black_cat-25.png"
 			,"WebContent/WEB-INF/res/black_cat-256.png"
 			};
 
-	public String getUrl(){
-		return filepath[1];
-	}
-
-	public String getPictureBase64(){
-		File f = new File(filepath[1]);
+	/**
+	 * 
+	 * @param i
+	 * @return encoded string by base64
+	 */
+	public String getPictureBase64(int i){
+		File f = 0<i && i<filepath.length ? new File(filepath[i]) : new File(filepath[0]);
 		BufferedImage image = null;
-		try{
-			image = ImageIO.read(f);
-		}catch(Exception e){
-		}
-
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		BufferedOutputStream bos = new BufferedOutputStream(baos);
-		image.flush();
+		
 		try{
+			image = ImageIO.read(f);
+			image.flush();
 			ImageIO.write(image, "png", bos);
 			bos.flush();
 			bos.close();
+			byte[] b = baos.toByteArray();
+			return Base64.encode(b);
+		
 		}catch(Exception e){
+			System.out.println(e);
+			return "";
 		}
-
-		byte[] b = baos.toByteArray();
-
-		return Base64.encode(b);
 	}
 }
