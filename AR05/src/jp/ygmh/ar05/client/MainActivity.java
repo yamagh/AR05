@@ -27,7 +27,6 @@ public class MainActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
@@ -39,44 +38,43 @@ public class MainActivity extends Activity {
 	}
 
 	public void onClickGetImage(View v) {
-		Log.d("DEBUG", "getImageButton was clicked");
 		ImageGetterTask igt = new ImageGetterTask();
 		igt.execute();
 	}
 
 	/**
 	 * 画像取得用の内部クラス
-	 * 
+	 *
 	 * @author yama
-	 * 
+	 *
 	 */
 	class ImageGetterTask extends AsyncTask<String, Integer, Long> {
-		
-		static final String _TAG = "BG_TASK";
+
+		static final String _TAG    = "BG_TASK";
+		static final String _HOST   = "http://192.168.24.55:8081";  // XML-RPCサーバのIPアドレス
+		static final String _CLASS  = "Picture";  // RPCするクラス
+		static final String _METHOD = "getPictureBase64";  // Callするメソッド
+		Object o = null;  // 実行結果を受取るオブジェクト
 
 		@Override
 		protected Long doInBackground(String... params) {
 			Log.d(_TAG, "thread in background");
 
-			// XML-RPCサーバ接続
-			XMLRPCClient client = new XMLRPCClient("http://192.168.24.55:8081");
-
-			// 実行するメソッド名
-			String method = "Picture.getPictureBase64";
-
-			// 実行結果を受取るオブジェクト
-			Object o = null;
-
 			try {
+				// XML-RPCサーバ接続
+				XMLRPCClient client = new XMLRPCClient(_HOST);
+
 				// RPC実行: 画像をBase64でエンコードした文字列が返る
-				o = client.call(method);
+				o = client.call(_CLASS + "." + _METHOD);
+
+				// バイトデータに変換
+				byte[] encodedByte = o.toString().getBytes();
+
 			} catch (XMLRPCException e) {
-				Log.e("AR05_ERROR", e.getMessage());
+				Log.e(_TAG, e.getMessage());
 				return null;
 			}
 
-			// バイトデータに変換
-			byte[] encodedByte = o.toString().getBytes();
 
 			// Base64をデコード
 			byte[] decodedByte = Base64.decode(encodedByte, Base64.DEFAULT);
@@ -86,17 +84,17 @@ public class MainActivity extends Activity {
 //					decodedByte.length);
 
 			Log.d(_TAG, "" + o.toString());
-			
+
 
 			Log.d(_TAG, "DB格納処理開始");
-			
+
 			// 画像格納用のDB接続 (DBがなければCREATE)
 			ARDbOpenHelper ardbh = new ARDbOpenHelper(getApplicationContext());
 			SQLiteDatabase sqldb = ardbh.getWritableDatabase();
-			
+
 			ContentValues val = new ContentValues();
 			val.put("image", decodedByte);
-			
+
 			try{
 				sqldb.insert("marker_table", null, val);
 				Log.d(_TAG, "DB格納成功");
