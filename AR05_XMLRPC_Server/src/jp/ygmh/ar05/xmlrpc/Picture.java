@@ -16,6 +16,7 @@ public class Picture {
 	public static String[] filepath = {
 			 "WebContent/WEB-INF/res/black_cat-25.png"
 			,"WebContent/WEB-INF/res/black_cat-256.png"
+			,"WebContent/WEB-INF/res/kangaenai.png"
 			};
 
 	/**

@@ -30,6 +30,7 @@ import android.widget.FrameLayout;
 
 public class CameraActivity extends AndSketch implements AndGLView.IGLFunctionEvent {
 	
+	// ARで表示する画像
 	Bitmap img = null;
 	
 	@Override
@@ -39,13 +40,24 @@ public class CameraActivity extends AndSketch implements AndGLView.IGLFunctionEv
 		// 使用するレイアウトの指定
 		setContentView(R.layout.activity_cam);
 		
+		// DBから画像取得
+		getDispImage();
+	}
+	
+	
+	/**
+	 * DBから画像を取得
+	 * todo: DBから取得する画像の条件を指定する (今はSELECTした結果の最初のレコードを取得している)。
+	 * @return true: 取得成功  false: 取得失敗
+	 */
+	private boolean getDispImage(){
 		// DB操作用ヘルパー生成
 		ARDbOpenHelper ardboh;
 		try{
 			ardboh = new ARDbOpenHelper(this);
 		}catch(Exception e){
-			Log.d("ERR", "Occured error of ARDbOpenHelper");
-			return;
+			Log.d("ERR", "Occured error at ARDbOpenHelper");
+			return false;
 		}
 		
 		// DB接続
@@ -58,11 +70,13 @@ public class CameraActivity extends AndSketch implements AndGLView.IGLFunctionEv
 			cur = sqldb.query(false, ARDbOpenHelper._TABLE, cols, null, null, null, null, null, null, null);
 		}catch(Exception e){
 			Log.d("ERR", "Occured error by query execute.");
-			return;
+			return false;
 		}
 
 		Log.v("INFO", Integer.toString(cur.getCount()));
 		if(cur.moveToFirst()){
+			// 最初のレコードの画像を取得する。
+			
 			// バイナリを取得
 			byte[] imgByte = cur.getBlob(0);
 		
@@ -72,6 +86,7 @@ public class CameraActivity extends AndSketch implements AndGLView.IGLFunctionEv
 		
 		// DB切断
 		sqldb.close();
+		return true;
 	}
 
 	CameraPreview _camera_preview;
@@ -116,10 +131,6 @@ public class CameraActivity extends AndSketch implements AndGLView.IGLFunctionEv
 	public void onClickCameraBackButton(View v){
 		finish();
 	}
-	
-	
-	
-	
 
 	NyARAndSensor _ss;
 	NyARAndMarkerSystem _ms;

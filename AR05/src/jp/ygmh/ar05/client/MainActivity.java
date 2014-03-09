@@ -38,17 +38,14 @@ public class MainActivity extends Activity {
 	}
 
 	public void onClickGetImage(View v) {
-		ImageGetterTask igt = new ImageGetterTask();
+		ImageGetTask igt = new ImageGetTask();
 		igt.execute();
 	}
 
 	/**
 	 * 画像取得用の内部クラス
-	 *
-	 * @author yama
-	 *
 	 */
-	class ImageGetterTask extends AsyncTask<String, Integer, Long> {
+	class ImageGetTask extends AsyncTask<String, Integer, Long> {
 
 		static final String _TAG    = "BG_TASK";
 		static final String _HOST   = "http://192.168.24.55:8081";  // XML-RPCサーバのIPアドレス
@@ -60,48 +57,78 @@ public class MainActivity extends Activity {
 		protected Long doInBackground(String... params) {
 			Log.d(_TAG, "thread in background");
 
+			// RPC実行
+			Object o = callRPC();
+			if(o!=null) {
+				// RPCに成功したらDBに格納
+				byte[] b = decodeBase64(o);
+				insertImage2DB(b);
+			}
+			
+			return null;
+		}
+		
+		/**
+		 * RPC実行
+		 * @return
+		 */
+		private Object callRPC(){
 			try {
 				// XML-RPCサーバ接続
 				XMLRPCClient client = new XMLRPCClient(_HOST);
 
 				// RPC実行: 画像をBase64でエンコードした文字列が返る
-				o = client.call(_CLASS + "." + _METHOD);
-
-				// バイトデータに変換
-				byte[] encodedByte = o.toString().getBytes();
+				return client.call(_CLASS + "." + _METHOD, 2);
 
 			} catch (XMLRPCException e) {
 				Log.e(_TAG, e.getMessage());
 				return null;
 			}
+		}
+		
+		
+		/**
+		 * Base64デコード
+		 * @param o
+		 * @return 
+		 */
+		private byte[] decodeBase64(Object o){
+			// バイトデータに変換
+			byte[] encodedByte = o.toString().getBytes();
 
-
-			// Base64をデコード
-			byte[] decodedByte = Base64.decode(encodedByte, Base64.DEFAULT);
-
-			// バイトデータから画像を生成
-//			ba[0] = BitmapFactory.decodeByteArray(decodedByte, 0,
-//					decodedByte.length);
-
-			Log.d(_TAG, "" + o.toString());
-
-
+			try{
+				// Base64をデコード
+				return Base64.decode(encodedByte, Base64.DEFAULT);
+			}catch(IllegalArgumentException e){
+				Log.e(_TAG, "failed to decode of Base64");
+				return null;
+			}
+		}
+		
+		
+		/**
+		 * 画像格納処理
+		 * @param b
+		 * @return　true: 成功  false: 失敗
+		 */
+		private boolean insertImage2DB(byte[] b){
 			Log.d(_TAG, "DB格納処理開始");
-
+			
 			// 画像格納用のDB接続 (DBがなければCREATE)
 			ARDbOpenHelper ardbh = new ARDbOpenHelper(getApplicationContext());
 			SQLiteDatabase sqldb = ardbh.getWritableDatabase();
 
 			ContentValues val = new ContentValues();
-			val.put("image", decodedByte);
+			val.put(ARDbOpenHelper._COL_DISP_IMG, b);
 
 			try{
-				sqldb.insert("marker_table", null, val);
+				sqldb.insert(ARDbOpenHelper._TABLE, null, val);
 				Log.d(_TAG, "DB格納成功");
+				return true;
 			}catch (Exception e){
 				Log.d(_TAG, "DB格納失敗");
+				return false;
 			}
-			return null;
 		}
 	}
 }
